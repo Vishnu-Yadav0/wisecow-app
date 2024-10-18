@@ -24,11 +24,11 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t your-dockerhub-username/wisecow:latest .
+          docker build -t vishnuyadav799/wisecow:latest .
           
       - name: Push Docker Image
         run: |
-          docker push your-dockerhub-username/wisecow:latest
+          docker push vishnuyadav799/wisecow:latest
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v1
@@ -47,7 +47,7 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image deployment/wisecow-deployment wisecow-container=your-dockerhub-username/wisecow:latest --record
+          kubectl set image deployment/wisecow-deployment wisecow-container=vishnuyadav799/wisecow:latest --record
           kubectl apply -f wisecow-service.yaml --validate=false
           kubectl apply -f wisecow-ingress.yaml --validate=false
 
