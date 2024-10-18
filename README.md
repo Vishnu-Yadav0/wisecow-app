@@ -53,9 +53,9 @@ The successful containerization and deployment of the Wisecow application to the
 To achieve the goals outlined in the problem statement, we followed a structured approach:
 
 1. **Dockerization:**
-   - We created a `Dockerfile` in the project repository to define how to build the Wisecow application as a Docker container. This included specifying the base image, copying the application code, installing dependencies, and defining the command to run the application.
+   - We created a Dockerfile in the project repository to define how to build the Wisecow application as a Docker container. This included specifying the base image, copying the application code, installing dependencies, and defining the command to run the application.
 
-   ```
+```
 FROM ubuntu:latest
 WORKDIR /app
 
@@ -73,7 +73,8 @@ EXPOSE 4499
 
 ENTRYPOINT ["sh", "-c", "/app/wisecow.sh"]
 
-ENV PATH="/usr/games:${PATH}" ```
+ENV PATH="/usr/games:${PATH}"
+```
 
 
 ```markdown
