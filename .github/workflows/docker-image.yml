@@ -3,54 +3,53 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main  # Change to your main branch name if different
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build Docker Image
+      run: |
+        docker build -t vishnuyadav799/wisecow-app:latest .
+      
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker Image
-        run: |
-          docker build -t vishnuyadav799/wisecow:latest .
-          
-      - name: Push Docker Image
-        run: |
-          docker push vishnuyadav799/wisecow:latest
+    - name: Push Docker Image
+      run: |
+        docker push vishnuyadav799/wisecow-app:latest
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v1
-        with:
-          version: 'latest'
+    - name: Setup SSH
+      run: |
+        echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
+        chmod 600 ec2_key.pem
 
-      - name: Configure kubectl
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
-          export KUBECONFIG=$(pwd)/kubeconfig.yaml
-          kubectl config use-context minikube  # Use the context from your kubeconfig
+    - name: SSH into EC2 and Deploy
+      run: |
+        ssh -i ec2_key.pem -o StrictHostKeyChecking=no ubuntu@13.235.62.34 << 'EOF'
+          # Set KUBECONFIG
+          export KUBECONFIG=$HOME/.kube/config
 
-      - name: Check Kubernetes Cluster Info
-        run: |
-          kubectl cluster-info
+          # Verify Kubernetes context
+          kubectl config current-context
 
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl set image deployment/wisecow-deployment wisecow-container=vishnuyadav799/wisecow:latest --record
-          kubectl apply -f wisecow-service.yaml --validate=false
-          kubectl apply -f wisecow-ingress.yaml --validate=false
+          # Deploy to Kubernetes
+          kubectl apply -f wisecow-deployment.yaml
+          kubectl apply -f wisecow-service.yaml
+          kubectl apply -f wisecow-ingress.yaml
+        EOF
 
-      - name: Verify Deployment
-        run: |
-          kubectl get pods
+    - name: Cleanup SSH Key
+      run: |
+        rm -f ec2_key.pem
