@@ -82,7 +82,7 @@ EXPOSE 4499
 ENTRYPOINT ["sh", "-c", "/app/wisecow.sh"]
 
 # Set PATH environment variable
-ENV PATH="/usr/games:${PATH}"
+ENV PATH="/usr/games:${PATH}" ```
 
 Here's a section you can add to your README file, detailing how you deployed the Wisecow application using Kubernetes Deployment, Service, Ingress, and your domain and certificate files:
 
