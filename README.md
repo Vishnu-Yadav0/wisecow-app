@@ -175,6 +175,66 @@ This ingress file includes:
 
 ### 4. Domain and Certificate Files
 
+Here's a detailed explanation of how you obtained the TLS certification for your Wisecow application, which you can use in your interview:
+
+### Obtaining TLS Certification
+
+1. **Certificate Authority (CA) Selection**
+   - We decided to use **Let's Encrypt**, a popular certificate authority that provides free TLS/SSL certificates. This choice was motivated by Let's Encrypt's automated process and wide acceptance across browsers.
+
+2. **Domain Verification**
+   - To obtain a TLS certificate, we needed to verify our ownership of the domain (e.g., `wisecow-app.example.com`). Let's Encrypt requires domain verification to ensure that the requester has control over the domain for which the certificate is being issued.
+
+3. **Using Certbot for Certificate Issuance**
+   - We used **Certbot**, an open-source tool, to automatically obtain and manage TLS certificates from Let's Encrypt.
+   - Here’s how the process worked:
+     - **Installation:** We installed Certbot on our EC2 instance, which is running the Kubernetes cluster.
+     - **Running Certbot:** We executed a command to request a certificate for our domain. The command typically looked something like this:
+       ```bash
+       sudo certbot certonly --standalone -d wisecow-app.example.com
+       ```
+     - **Challenges:** Certbot completed the domain verification by responding to challenges issued by Let's Encrypt, which involved making temporary changes to our server to prove ownership.
+
+4. **Certificate Generation**
+   - Upon successful verification, Let's Encrypt issued the TLS certificate along with the associated private key. These files were typically stored in `/etc/letsencrypt/live/wisecow-app.example.com/`, which contained:
+     - `fullchain.pem`: The full certificate chain (your domain certificate and any intermediate certificates).
+     - `privkey.pem`: The private key associated with your certificate.
+
+5. **Configuring TLS in Kubernetes**
+   - After obtaining the certificate and key, we created a **Kubernetes Secret** to store them securely:
+     ```bash
+     kubectl create secret tls wisecow-tls --cert=/etc/letsencrypt/live/wisecow-app.example.com/fullchain.pem --key=/etc/letsencrypt/live/wisecow-app.example.com/privkey.pem
+     ```
+   - This secret was referenced in our **Ingress resource** configuration, allowing the Ingress controller to serve traffic over HTTPS:
+     ```yaml
+     apiVersion: networking.k8s.io/v1
+     kind: Ingress
+     metadata:
+       name: wisecow-ingress
+     spec:
+       tls:
+       - hosts:
+         - wisecow-app.example.com
+         secretName: wisecow-tls
+       rules:
+       - host: wisecow-app.example.com
+         http:
+           paths:
+           - path: /
+             pathType: Prefix
+             backend:
+               service:
+                 name: wisecow-service
+                 port:
+                   number: 3000
+     ```
+
+6. **Automatic Renewal**
+   - Let's Encrypt certificates are valid for **90 days**, so we set up a **cron job** or a **systemd timer** to automatically renew the certificate before expiration. This involves running Certbot with the renewal command:
+     ```bash
+     sudo certbot renew
+     ```
+
 To secure the Wisecow application with HTTPS, we used Let's Encrypt to obtain a TLS certificate. The certificate files were placed in a Kubernetes secret for secure access:
 
 - **Certificate Secret:** Created using the following command:
