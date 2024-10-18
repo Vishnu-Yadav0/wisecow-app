@@ -35,6 +35,10 @@ jobs:
         echo "${{ secrets.EC2_SSH_KEY }}" > ec2_key.pem
         chmod 600 ec2_key.pem
 
+    - name: Copy Kubernetes Manifests to EC2
+      run: |
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ./wisecow-deployment.yaml ./wisecow-service.yaml ./wisecow-ingress.yaml ubuntu@13.235.62.34:~/
+
     - name: SSH into EC2 and Deploy
       run: |
         ssh -i ec2_key.pem -o StrictHostKeyChecking=no ubuntu@13.235.62.34 << 'EOF'
